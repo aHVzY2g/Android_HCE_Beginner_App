@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ScrollView;
@@ -68,7 +69,13 @@ public class HomeKeyActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(receiver, new IntentFilter(ACTION_NFC_STATUS));
+        IntentFilter filter = new IntentFilter(ACTION_NFC_STATUS);
+        // Android 13+ (API 33) requires an explicit exported/not-exported flag
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(receiver, filter);
+        }
     }
 
     @Override
@@ -84,7 +91,6 @@ public class HomeKeyActivity extends AppCompatActivity {
             return;
         }
         String hex = HomeKeyCrypto.toHex(pub);
-        // split into 3 lines of ~44 chars for readability
         String line1 = hex.substring(0, Math.min(44, hex.length()));
         String line2 = hex.length() > 44 ? hex.substring(44, Math.min(88, hex.length())) : "";
         String line3 = hex.length() > 88 ? hex.substring(88) : "";
