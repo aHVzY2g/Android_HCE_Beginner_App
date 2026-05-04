@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/hk_service_desc"
+    android:requireDeviceUnlock="false">
+
+    <aid-group
+        android:description="@string/hk_aid_desc"
+        android:category="other">
+
+        <!-- Primary AID: authentication flow (SELECT -> FAST -> STANDARD) -->
+        <aid-filter android:name="A0000008580101"/>
+
+        <!-- Configuration AID: attestation exchange (ENVELOPE) -->
+        <aid-filter android:name="A0000008580102"/>
+
+    </aid-group>
+</host-apdu-service>
