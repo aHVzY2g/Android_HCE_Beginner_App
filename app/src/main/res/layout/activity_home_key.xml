@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#FAFAFA">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Apple Home Key Emulator"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/tv_hk_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: Initializing..."
+        android:textSize="14sp"
+        android:paddingBottom="10dp"/>
+
+    <TextView
+        android:id="@+id/tv_hk_pubkey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Device Public Key: Loading..."
+        android:textSize="10sp"
+        android:fontFamily="monospace"
+        android:background="#E8E8E8"
+        android:padding="8dp"
+        android:paddingBottom="10dp"/>
+
+    <Button
+        android:id="@+id/btn_hk_regen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Regenerate Keys"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Transaction Log (newest first):"
+        android:textStyle="bold"
+        android:paddingBottom="4dp"/>
+
+    <ScrollView
+        android:id="@+id/scroll_log"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#F0F0F0"
+        android:padding="6dp">
+
+        <TextView
+            android:id="@+id/tv_hk_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:text="(waiting for NFC tap...)"/>
+
+    </ScrollView>
+
+</LinearLayout>
