@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ScrollView;
@@ -14,14 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import de.androidcrypto.android_hce_beginner_app.R;
 
-/**
- * Main UI for the Apple Home Key emulator.
- *
- * Shows:
- *  - NFC / HCE readiness status
- *  - Device long-term public key (share with your reader for enrollment)
- *  - Live transaction log broadcast from HomeKeyHceService
- */
 public class HomeKeyActivity extends AppCompatActivity {
 
     public static final String ACTION_NFC_STATUS = "de.androidcrypto.homekey.NFC_STATUS";
@@ -68,7 +61,12 @@ public class HomeKeyActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(receiver, new IntentFilter(ACTION_NFC_STATUS));
+        IntentFilter filter = new IntentFilter(ACTION_NFC_STATUS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(receiver, filter);
+        }
     }
 
     @Override
@@ -79,12 +77,8 @@ public class HomeKeyActivity extends AppCompatActivity {
 
     private void refreshPubKey() {
         byte[] pub = crypto.getDevicePublicKeyBytes();
-        if (pub == null) {
-            tvPubKey.setText("Device Public Key: unavailable");
-            return;
-        }
+        if (pub == null) { tvPubKey.setText("Device Public Key: unavailable"); return; }
         String hex = HomeKeyCrypto.toHex(pub);
-        // split into 3 lines of ~44 chars for readability
         String line1 = hex.substring(0, Math.min(44, hex.length()));
         String line2 = hex.length() > 44 ? hex.substring(44, Math.min(88, hex.length())) : "";
         String line3 = hex.length() > 88 ? hex.substring(88) : "";
@@ -93,13 +87,12 @@ public class HomeKeyActivity extends AppCompatActivity {
 
     private void checkNfc() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
-        if (adapter == null) {
+        if (adapter == null)
             tvStatus.setText("Status: NFC not supported on this device");
-        } else if (!adapter.isEnabled()) {
+        else if (!adapter.isEnabled())
             tvStatus.setText("Status: NFC is disabled - enable it in Settings");
-        } else {
+        else
             tvStatus.setText("Status: Ready - hold phone near a Home Key reader");
-        }
     }
 
     private void appendLog(String msg) {

@@ -11,23 +11,12 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="@string/hk_app_label"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Android_HCE_Beginner_App"
         tools:targetApi="31">
 
-        <!-- Original activity -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <!-- Apple Home Key emulator activity (separate launcher icon) -->
         <activity
             android:name=".homekey.HomeKeyActivity"
             android:exported="true"
@@ -38,21 +27,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Original HCE service -->
-        <service
-            android:name=".BasicHceService"
-            android:exported="true"
-            android:permission="android.permission.BIND_NFC_SERVICE">
-            <intent-filter>
-                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-            <meta-data
-                android:name="android.nfc.cardemulation.host_apdu_service"
-                android:resource="@xml/apduservice"/>
-        </service>
-
-        <!-- Apple Home Key HCE service -->
         <service
             android:name=".homekey.HomeKeyHceService"
             android:exported="true"
