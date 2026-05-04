@@ -16,4 +16,9 @@
         android:icon="@drawable/nfc_icon_r2"
         android:title="Read" />
 
+    <item
+        android:id="@+id/homekey"
+        android:icon="@drawable/ic_key_24"
+        android:title="Home Key" />
+
 </menu>
