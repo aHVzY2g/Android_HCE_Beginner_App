@@ -1,6 +1,8 @@
 package de.androidcrypto.android_hce_beginner_app.homekey;
 
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -9,6 +11,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,7 +22,10 @@ import de.androidcrypto.android_hce_beginner_app.R;
  *
  * Shows:
  *  - NFC / HCE readiness status
- *  - Device long-term public key (share with your reader for enrollment)
+ *  - Device long-term public key (65-byte uncompressed, hex)
+ *  - Device identifier (6-byte random ID sent as tag 0x4E in STANDARD AUTH)
+ *  - "Copy Enrollment JSON" button — copies the JSON payload for the ESP32
+ *    /api/android/enroll endpoint so the reader can verify signatures
  *  - Live transaction log broadcast from HomeKeyHceService
  */
 public class HomeKeyActivity extends AppCompatActivity {
@@ -29,6 +35,7 @@ public class HomeKeyActivity extends AppCompatActivity {
 
     private TextView   tvStatus;
     private TextView   tvPubKey;
+    private TextView   tvDeviceId;
     private TextView   tvLog;
     private ScrollView scrollLog;
 
@@ -48,21 +55,25 @@ public class HomeKeyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_key);
 
-        tvStatus  = findViewById(R.id.tv_hk_status);
-        tvPubKey  = findViewById(R.id.tv_hk_pubkey);
-        tvLog     = findViewById(R.id.tv_hk_log);
-        scrollLog = findViewById(R.id.scroll_log);
+        tvStatus   = findViewById(R.id.tv_hk_status);
+        tvPubKey   = findViewById(R.id.tv_hk_pubkey);
+        tvDeviceId = findViewById(R.id.tv_hk_device_id);
+        tvLog      = findViewById(R.id.tv_hk_log);
+        scrollLog  = findViewById(R.id.scroll_log);
 
         crypto = new HomeKeyCrypto(this);
-        refreshPubKey();
+        refreshKeyInfo();
         checkNfc();
 
         Button btnRegen = findViewById(R.id.btn_hk_regen);
         btnRegen.setOnClickListener(v -> {
             crypto.generateDeviceKey();
-            refreshPubKey();
+            refreshKeyInfo();
             appendLog("New device key pair generated");
         });
+
+        Button btnCopy = findViewById(R.id.btn_hk_copy_enrollment);
+        btnCopy.setOnClickListener(v -> copyEnrollmentJson());
     }
 
     @Override
@@ -77,18 +88,43 @@ public class HomeKeyActivity extends AppCompatActivity {
         unregisterReceiver(receiver);
     }
 
-    private void refreshPubKey() {
+    // -------------------------------------------------------------------------
+
+    private void refreshKeyInfo() {
         byte[] pub = crypto.getDevicePublicKeyBytes();
+        byte[] id  = crypto.getDeviceIdentifier();
+
         if (pub == null) {
             tvPubKey.setText("Device Public Key: unavailable");
+        } else {
+            String hex = HomeKeyCrypto.toHex(pub);
+            tvPubKey.setText("Device Public Key (65 bytes):\n"
+                    + hex.substring(0, 44) + "\n"
+                    + (hex.length() > 44  ? hex.substring(44,  Math.min(88,  hex.length())) + "\n" : "")
+                    + (hex.length() > 88  ? hex.substring(88,  Math.min(130, hex.length())) + "\n" : "")
+                    + (hex.length() > 130 ? hex.substring(130) : ""));
+        }
+
+        if (id == null) {
+            tvDeviceId.setText("Device ID (endpoint_id): unavailable");
+        } else {
+            tvDeviceId.setText("Device ID (endpoint_id): " + HomeKeyCrypto.toHex(id));
+        }
+    }
+
+    private void copyEnrollmentJson() {
+        byte[] pub = crypto.getDevicePublicKeyBytes();
+        byte[] id  = crypto.getDeviceIdentifier();
+        if (pub == null || id == null) {
+            Toast.makeText(this, "Key not ready", Toast.LENGTH_SHORT).show();
             return;
         }
-        String hex = HomeKeyCrypto.toHex(pub);
-        // split into 3 lines of ~44 chars for readability
-        String line1 = hex.substring(0, Math.min(44, hex.length()));
-        String line2 = hex.length() > 44 ? hex.substring(44, Math.min(88, hex.length())) : "";
-        String line3 = hex.length() > 88 ? hex.substring(88) : "";
-        tvPubKey.setText("Device Public Key (share with reader):\n" + line1 + "\n" + line2 + "\n" + line3);
+        String json = "{\"public_key\":\"" + HomeKeyCrypto.toHex(pub)
+                + "\",\"endpoint_id\":\"" + HomeKeyCrypto.toHex(id) + "\"}";
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        cm.setPrimaryClip(ClipData.newPlainText("HomeKey Enrollment", json));
+        Toast.makeText(this, "Enrollment JSON copied to clipboard", Toast.LENGTH_SHORT).show();
+        appendLog("Copied enrollment JSON for endpoint_id " + HomeKeyCrypto.toHex(id));
     }
 
     private void checkNfc() {
